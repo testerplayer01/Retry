@@ -60,7 +60,7 @@ public class secondLessonTest {
             } else if (score >= 81 && score <= 100) {
                 expected = "A";
             } else {
-                expected = "Error";
+                expected = "Error!";
             }
         assertEquals(expected, grade);
         System.out.println("Баллы: " + score + ", Оценка: " + grade);

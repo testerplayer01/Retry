@@ -29,6 +29,6 @@ tasks.register("runSecondLessonTest") {
 tasks.register("finishMessage") {
     dependsOn("runSecondLessonTest")
     doLast {
-        println("test run is over")
+        println("test run is over!")
     }
 }

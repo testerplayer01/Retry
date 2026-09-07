@@ -28,7 +28,7 @@ public class secondLessonMethod {
                 return "A";
             }
             else {
-                return "Error";
+                return "Error!";
             }
         }
     }
