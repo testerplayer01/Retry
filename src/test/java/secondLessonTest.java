@@ -218,7 +218,7 @@ public class secondLessonTest {
             "60, C",
             "61, B",
             "80, B",
-            "81, F",})
+            "81, A",})
     @DisplayName("Test getGrade method with various scores")
     void testGetGrade2(int score, String expectedGrade) {
         String grade = logic.getGrade(score);
@@ -257,6 +257,7 @@ public class secondLessonTest {
         System.out.println("Массив значений: " + Arrays.toString(values));
         System.out.println("Ожидаемый результат: " + expected);
         System.out.println("Фактический результат: " + result);
+        checkResult("hasBugs -", result == expected);
     }
 
 @ParameterizedTest
