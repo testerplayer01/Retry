@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -95,7 +94,21 @@ public class secondLessonMethod {
         return sum / count;
     }
 
-    public static String getEvenInRange(int start, int end) {
+    public static List<Integer> getEvenInRange(int start, int end) {
+        List<Integer> result = new ArrayList<>();
+        boolean first = true;
+        if (start > end) {
+            return new ArrayList<>();
+        }
+        for (int i = start; i <= end; i++) {
+            if (i % 2 == 0) {
+                result.add(i);
+            }
+        }
+        return result;
+    }
+
+    public static String getEvenInRange3(int start, int end) {
         StringBuilder result = new StringBuilder();
         boolean first = true;
         if (start > end) {
