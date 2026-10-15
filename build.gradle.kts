@@ -16,11 +16,13 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.assertj:assertj-core:3.27.7")
     testImplementation("io.rest-assured:rest-assured:5.5.6")
+    implementation("org.seleniumhq.selenium:selenium-java:4.50.0")
+    implementation("com.codeborne:selenide:7.18.2")
 }
 
 tasks.test {
     useJUnitPlatform() {
-        includeTags("ParameterizedTest", "RestAssuredHomework")
+        includeTags("ParameterizedTest", "RestAssuredHomework", "Selenium", "Selenide", "UIHomework")
     }
     testLogging {
         events("passed", "skipped", "failed")
@@ -31,6 +33,9 @@ tasks.test {
         includeTestsMatching("secondLessonTest")
         includeTestsMatching("AssertLessonTest")
         includeTestsMatching("RestAssuredHomework")
+        includeTestsMatching("SeleniumLesson")
+        includeTestsMatching("SelenideLesson")
+        includeTestsMatching("UIHomework")
     }
 }
 
