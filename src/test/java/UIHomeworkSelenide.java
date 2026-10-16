@@ -48,7 +48,7 @@ public class UIHomeworkSelenide {
         $x("//*[@data-action='add-to-cart']").click();
         $x("//*[@id='open-cart-btn']").click();
         $x("//*[@class='cart-item']").shouldBe(visible);
-        Selenide.sleep(2000);
+        Selenide.sleep(3000);
     }
 
     @Tag("Selenide")
