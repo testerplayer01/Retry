@@ -37,6 +37,7 @@ tasks.test {
         includeTestsMatching("SelenideLesson")
         includeTestsMatching("UIHomeworkSelenium")
         includeTestsMatching("UIHomeworkSelenide")
+        includeTestsMatching("UIHomeworkWeb")
     }
 }
 
