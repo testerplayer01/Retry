@@ -1,6 +1,7 @@
 import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
+import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Random;
 
+import static com.codeborne.selenide.CollectionCondition.texts;
 import static com.codeborne.selenide.Condition.text;
 import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selenide.*;
@@ -29,24 +31,24 @@ public class UIHomeworkWeb {
     @Tag("UIHomework")
     @Test
     void task1() {
-            SelenideElement addToCartButton = $x("//*[@data-action='add-to-cart']");
-            addToCartButton.click();
-            addToCartButton.click();
-            addToCartButton.click();
-            $("#open-cart-btn").click();
-            int totalPrice = Integer.parseInt($("#total-price").getText().replaceAll("\\D+", "")
-                    .trim());
-            assertThat(totalPrice).as("Сумма в корзине не должна быть выше 300")
-                    .isLessThanOrEqualTo(300);
-            System.out.println("Сумма: " + totalPrice);
-            $("#makeOrder").click();
+        SelenideElement addToCartButton = $x("//*[@data-action='add-to-cart']");
+        addToCartButton.click();
+        addToCartButton.click();
+        addToCartButton.click();
+        $("#open-cart-btn").click();
+        int totalPrice = Integer.parseInt($("#total-price").getText().replaceAll("\\D+", "")
+                .trim());
+        assertThat(totalPrice).as("Сумма в корзине не должна быть выше 300")
+                .isLessThanOrEqualTo(300);
+        System.out.println("Сумма: " + totalPrice);
+        $("#makeOrder").click();
 
-            $x("//*[contains(text(), 'Заказ принят в обработку!')]")
-                    .shouldBe(visible)
-                    .shouldHave(text("Заказ принят в обработку!"));
-            $x("//*[@id='main-title']")
-                    .shouldBe(visible)
-                    .shouldHave(text("Заказ успешно оформлен!"));
+        $x("//*[contains(text(), 'Заказ принят в обработку!')]")
+                .shouldBe(visible)
+                .shouldHave(text("Заказ принят в обработку!"));
+        $x("//*[@id='main-title']")
+                .shouldBe(visible)
+                .shouldHave(text("Заказ успешно оформлен!"));
 
     }
 
@@ -96,7 +98,16 @@ public class UIHomeworkWeb {
         $x("//*[@id='password']").setValue("secret123");
         $x("//*[@type='submit']").click();
 
+        String newName = new Random().nextInt(1, 999) + "Товар ";
 
+        $x("//*[@id='tbody']/tr[1]/td[2]//input[@type='text']").setValue(newName);
+        $x("//*[@id='tbody']/tr[1]/td[4]//*[@class='btn btn-upd']").click();
+
+
+        $x("/html/body/div[2]/div[1]/a").click();
+        sleep(4000);
+
+        $x("//h4[contains(text(), '" + newName + "')]").shouldBe(visible);
     }
 
     @AfterEach
@@ -142,5 +153,19 @@ public class UIHomeworkWeb {
         }
         Selenide.closeWebDriver();
     }
+//        for (int i = 1; i < 150; i++) {
+//            given()
+//                    .baseUri("http://localhost:8080")
+//                    .auth().preemptive().basic("admin", "secret123")
+//                    .contentType(ContentType.JSON)
+//                    .log().all()
+//                    .pathParam("id", i)
+//                    .when()
+//                    .delete("/goods/{id}")
+//                    .then()
+//                    .log().all()
+//                    .extract().response();
+//        }
 }
+
 
