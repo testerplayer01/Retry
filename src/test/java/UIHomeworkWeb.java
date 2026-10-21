@@ -7,6 +7,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import utils.ConfigParser;
 
 import java.util.List;
 import java.util.Random;
@@ -23,8 +24,10 @@ public class UIHomeworkWeb {
 
     @BeforeEach
     void setup() {
+        ConfigParser.printConfig();
         Configuration.holdBrowserOpen = true;
-        Selenide.open("http://localhost:8080/");
+        Configuration.timeout = ConfigParser.getTimeout();
+        Selenide.open(ConfigParser.getBaseUrl());
         productNameToDelete = null;
     }
 
@@ -72,12 +75,12 @@ public class UIHomeworkWeb {
     void task3() {
         $x("//*[@class='btn-outline']").click();
 
-        $x("//*[@id='username']").setValue("admin");
-        $x("//*[@id='password']").setValue("secret123");
+        $x("//*[@id='username']").setValue(ConfigParser.getAdminLogin());
+        $x("//*[@id='password']").setValue(ConfigParser.getAdminPassword());
         $x("//*[@type='submit']").click();
 
-        String name = "Товар " + new Random().nextInt(1, 999);
-        String price = String.valueOf(new Random().nextInt(10, 200));
+        String name = ConfigParser.getProductName() +" " + new Random().nextInt(1, 999);
+        String price = ConfigParser.getProductPrice();
 
         $x("//*[@id='n-name']").setValue(name);
         $x("//*[@id='n-price']").setValue(price);
@@ -115,11 +118,11 @@ public class UIHomeworkWeb {
         if (productNameToDelete != null) {
             try {
                 Response response = given()
-                        .baseUri("http://localhost:8080")
-                        .auth().preemptive().basic("admin", "secret123")
+                        .baseUri(ConfigParser.getBaseUrl())
+                        .auth().preemptive().basic(ConfigParser.getAdminLogin(), ConfigParser.getAdminPassword())
                         .log().all()
                     .when()
-                        .get("/goods/list")
+                        .get(ConfigParser.getAPI())
                     .then()
                         .log().all()
                         .statusCode(200)
@@ -135,8 +138,8 @@ public class UIHomeworkWeb {
                     if (productNameToDelete.equals(productNames.get(i))) {
                         System.out.println("Удаление товара ID: " + productIds.get(i));
                         given()
-                                .baseUri("http://localhost:8080")
-                                .auth().preemptive().basic("admin", "secret123")
+                                .baseUri(ConfigParser.getBaseUrl())
+                                .auth().preemptive().basic(ConfigParser.getAdminLogin(), ConfigParser.getAdminPassword())
                                 .log().all()
                             .when()
                                 .delete("/goods/{id}", productIds.get(i))
