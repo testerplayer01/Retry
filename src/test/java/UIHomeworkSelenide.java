@@ -1,8 +1,5 @@
 import com.codeborne.selenide.*;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.openqa.selenium.Alert;
 
 import java.util.Random;
@@ -10,12 +7,13 @@ import java.util.Random;
 import static com.codeborne.selenide.CollectionCondition.sizeGreaterThan;
 import static com.codeborne.selenide.Selenide.*; //можно не использовать Selenide.
 import static com.codeborne.selenide.Condition.*; //можно не использовать Condition.
+import static org.assertj.core.api.Assertions.assertThat;
 
 
 public class UIHomeworkSelenide {
     @BeforeEach
     void setup() {
-        Configuration.holdBrowserOpen = true;
+//        Configuration.holdBrowserOpen = true;
         Selenide.open("http://localhost:8080/");
 
     }
@@ -76,20 +74,39 @@ public class UIHomeworkSelenide {
     @Tag("Selenide")
     @Test
     void task5() {
-        SelenideElement addToCartButton = $x("//*[@data-action='add-to-cart']");
+        $x("//*[@class='btn-outline']").click();
+
+        $x("//*[@id='username']").setValue("admin");
+        $x("//*[@id='password']").setValue("secret123");
+        $x("//*[@type='submit']").click();
+
+        String name = "Товар " + new Random().nextInt(1, 999);
+        String price = String.valueOf(new Random().nextInt(100, 200));
+
+        $x("//*[@id='n-name']").setValue(name);
+        $x("//*[@id='n-price']").setValue(price);
+        $x("//*[@class='btn btn-add']").click();
+
+        $x("/html/body/div[2]/div[1]/a").click();
+
+        SelenideElement addToCartButton = $x("//*[@data-action='add-to-cart' and @data-name='" + name + "' and @data-price='" + price + "']");
         addToCartButton.click();
         addToCartButton.click();
         addToCartButton.click();
         addToCartButton.click();
         $("#open-cart-btn").click();
         $("#makeOrder").click();
-        Alert activeAlert = Selenide.switchTo().alert();
+        Alert activeAlert = switchTo().alert();
+        assertThat(activeAlert.getText())
+                .as("Текст алерта должен содержать 'Денег не хватает! '")
+                .contains("Денег не хватает!");
+                
         System.out.println(activeAlert.getText());
-        Selenide.sleep(3000);
+        sleep(3000);
         activeAlert.accept();
     }
-//    @AfterEach
-//    void tearDown() {
-//        Selenide.closeWebDriver();
-//    }
+    @AfterEach
+    void tearDown() {
+        Selenide.closeWebDriver();
+    }
 }

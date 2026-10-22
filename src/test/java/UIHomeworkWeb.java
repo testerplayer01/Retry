@@ -55,15 +55,20 @@ public class UIHomeworkWeb {
     @Tag("UIHomework")
     @Test
     void task2() {
-        $$x("//*[@data-action='add-to-cart']").get(0).click();
-        $$x("//*[@data-action='add-to-cart']").get(2).click();
-        $$x("//*[@data-action='add-to-cart']").get(3).click();
+        int expectedTotalPrice = 0;
+        for (int productIndex : new int[]{0, 2, 3}) {
+            SelenideElement addToCartButton = $$x("//*[@data-action='add-to-cart']").get(productIndex);
+            expectedTotalPrice += Integer.parseInt(addToCartButton.getAttribute("data-price"));
+            addToCartButton.click();
+        }
 
         $x("//*[@id='open-cart-btn']").click();
 
         int totalPrice = Integer.parseInt($x("//*[@id='total-price']")
                 .getText().replaceAll("\\D+", "")
                 .trim());
+        assertThat(totalPrice).as("Сумма в корзине должна совпадать с суммой цен добавленных товаров")
+                .isEqualTo(expectedTotalPrice);
         System.out.println("Общая сумма: " + totalPrice);
     }
 
@@ -167,5 +172,4 @@ public class UIHomeworkWeb {
 //                    .extract().response();
 //        }
 }
-
 
