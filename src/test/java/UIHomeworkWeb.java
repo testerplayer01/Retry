@@ -123,9 +123,9 @@ public class UIHomeworkWeb {
                         .baseUri("http://localhost:8080")
                         .auth().preemptive().basic("admin", "secret123")
                         .log().all()
-                    .when()
+                        .when()
                         .get("/goods/list")
-                    .then()
+                        .then()
                         .log().all()
                         .statusCode(200)
                         .extract()
@@ -143,9 +143,9 @@ public class UIHomeworkWeb {
                                 .baseUri("http://localhost:8080")
                                 .auth().preemptive().basic("admin", "secret123")
                                 .log().all()
-                            .when()
+                                .when()
                                 .delete("/goods/{id}", productIds.get(i))
-                            .then()
+                                .then()
                                 .log().all()
                                 .statusCode(200);
                         break;
@@ -157,19 +157,20 @@ public class UIHomeworkWeb {
             productNameToDelete = null;
         }
         Selenide.closeWebDriver();
+
+        for (int i = 1; i < 150; i++) {
+            given()
+                    .baseUri("http://localhost:8080")
+                    .auth().preemptive().basic("admin", "secret123")
+                    .contentType(ContentType.JSON)
+                    .log().all()
+                    .pathParam("id", i)
+                    .when()
+                    .delete("/goods/{id}")
+                    .then()
+                    .log().all()
+                    .extract().response();
+        }
     }
-//        for (int i = 1; i < 150; i++) {
-//            given()
-//                    .baseUri("http://localhost:8080")
-//                    .auth().preemptive().basic("admin", "secret123")
-//                    .contentType(ContentType.JSON)
-//                    .log().all()
-//                    .pathParam("id", i)
-//                    .when()
-//                    .delete("/goods/{id}")
-//                    .then()
-//                    .log().all()
-//                    .extract().response();
-//        }
 }
 

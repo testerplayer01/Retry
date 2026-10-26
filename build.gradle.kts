@@ -22,7 +22,7 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform() {
-        includeTags("ParameterizedTest", "RestAssuredHomework", "Selenium", "Selenide", "UIHomework")
+        includeTags("ParameterizedTest", "RestAssuredHomework", "Selenium", "Selenide", "UIHomework", "PageObject")
     }
     testLogging {
         events("passed", "skipped", "failed")
@@ -40,6 +40,7 @@ tasks.test {
         includeTestsMatching("UIHomeworkWeb")
         includeTestsMatching("BPLesson")
         includeTestsMatching("BPHomework")
+        includeTestsMatching("PageObjectHomework")
 
     }
 }
