@@ -92,6 +92,7 @@ public class secondLessonTest {
             System.out.println(testName + " TEST PASSED");
         } else {
             System.out.println(testName + " TEST FAILED");
+            org.junit.jupiter.api.Assertions.fail(testName + " failed");
         }
     }
 
@@ -203,10 +204,10 @@ public class secondLessonTest {
         Random random = new Random();
         int start = random.nextInt(0, 100);
         int end = random.nextInt(0, 100);
-        String result = logic.getEvenInRange(start, end);
+        List<Integer> result = logic.getEvenInRange(start, end);
         System.out.println("Диапазон: " + start + " - " + end);
         System.out.println("Чётные числа: " + result);
-        checkResult("getEvenInRange(repeated)", result.matches("^(\\d+\\s)*\\d+$") || result.equals("Error"));
+        checkResult("getEvenInRange(repeated)", !result.isEmpty());
     }
 
     @ParameterizedTest
