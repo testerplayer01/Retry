@@ -15,11 +15,12 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.assertj:assertj-core:3.27.7")
+    testImplementation("io.rest-assured:rest-assured:5.5.6")
 }
 
 tasks.test {
     useJUnitPlatform() {
-        includeTags("ParameterizedTest")
+        includeTags("ParameterizedTest", "RestAssuredHomework")
     }
     testLogging {
         events("passed", "skipped", "failed")
@@ -29,6 +30,17 @@ tasks.test {
     filter {
         includeTestsMatching("secondLessonTest")
         includeTestsMatching("AssertLessonTest")
+        includeTestsMatching("RestAssuredHomework")
+    }
+}
+
+tasks.register<Test>("apiTest") {
+    description = "Runs all REST Assured API tests."
+    group = "verification"
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
+    useJUnitPlatform {
+        includeTags("RestAssuredHomework")
     }
 }
 
