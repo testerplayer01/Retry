@@ -16,6 +16,7 @@ public class BPHomework {
     private String price = String.valueOf(new Random().nextInt(10, 200));
     SelenideElement firstCard = $x("//*[@data-name='" + name + "']");
     SelenideElement cardButton = $x("//*[@id='open-cart-btn']");
+    SelenideElement secondCard = $x("//*[@class='product-card']");
 
     @BeforeEach
     void setup() {
@@ -54,7 +55,7 @@ public class BPHomework {
     @Test
     void task2() {
         sleep(2000);
-        firstCard.dragAndDrop(DragAndDropOptions.to(cardButton));
+        secondCard.dragAndDrop(DragAndDropOptions.to(cardButton));
         sleep(2000);
 
         $x("//*[@id='open-cart-btn']").click();
