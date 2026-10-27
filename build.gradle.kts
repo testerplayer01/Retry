@@ -18,6 +18,7 @@ dependencies {
     testImplementation("io.rest-assured:rest-assured:5.5.6")
     implementation("org.seleniumhq.selenium:selenium-java:4.50.0")
     implementation("com.codeborne:selenide:7.18.2")
+    implementation("org.aeonbits.owner:owner:1.0.12")
 }
 
 tasks.test {
@@ -40,6 +41,7 @@ tasks.test {
         includeTestsMatching("UIHomeworkWeb")
         includeTestsMatching("BPLesson")
         includeTestsMatching("BPHomework")
+        includeTestsMatching("ConfigTests")
 
     }
 }
