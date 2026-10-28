@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="JavaProjectCodeInsightSettings">
+    <included-static-names>
+      <name>com.codeborne.selenide.CollectionCondition.sizeGreaterThan</name>
+      <name>io.restassured.response</name>
+      <name>io.restassured.Response</name>
+    </included-static-names>
+  </component>
+</project>
