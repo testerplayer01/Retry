@@ -123,15 +123,12 @@ public class UIHomeworkWeb {
         if (productNameToDelete != null) {
             try {
                 Response response = given()
-                        .baseUri(ConfigParser.getBaseUrl())
-                        .auth().preemptive().basic(ConfigParser.getAdminLogin(), ConfigParser.getAdminPassword())
+                        .baseUri("http://localhost:8080")
+                        .auth().preemptive().basic("admin", "secret123")
                         .log().all()
                         .when()
                         .get("/goods/list")
                         .then()
-                    .when()
-                        .get(ConfigParser.getAPI())
-                    .then()
                         .log().all()
                         .statusCode(200)
                         .extract()

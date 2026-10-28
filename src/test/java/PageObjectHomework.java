@@ -1,5 +1,7 @@
+import com.codeborne.selenide.Selenide;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -172,5 +174,9 @@ public class PageObjectHomework {
         System.out.println("Новое наименование: " + mainPage.newName);
         
         
+    }
+    @AfterEach
+    void tearDown(){
+        Selenide.closeWebDriver();
     }
 }
