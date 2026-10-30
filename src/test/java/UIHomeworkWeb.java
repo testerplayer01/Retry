@@ -1,58 +1,56 @@
 import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.Selenide;
-import com.codeborne.selenide.SelenideElement;
-import io.restassured.http.ContentType;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
+import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import utils.AllureSelenideListener;
 import utils.ConfigParser;
+import utils.GoodsApiSteps;
+import utils.SelenideSteps;
 
-import java.util.List;
+import java.util.OptionalLong;
 import java.util.Random;
 
-import static com.codeborne.selenide.CollectionCondition.texts;
-import static com.codeborne.selenide.Condition.text;
-import static com.codeborne.selenide.Condition.visible;
-import static com.codeborne.selenide.Selenide.*;
-import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class UIHomeworkWeb {
+@Epic("Каталог товаров")
+@Feature("Сценарии UI и очистка через API")
+public class UIHomeworkWeb extends AllureSelenideListener {
+    private final GoodsApiSteps goodsApi = new GoodsApiSteps();
+    private final RestAssuredHomeworkCheck apiChecks = new RestAssuredHomeworkCheck();
     private String productNameToDelete;
 
     @BeforeEach
     void setup() {
-        ConfigParser.printConfig();
-        Configuration.holdBrowserOpen = true;
         Configuration.timeout = ConfigParser.getTimeout();
-        Selenide.open(ConfigParser.getBaseUrl());
+        SelenideSteps.open(ConfigParser.getBaseUrl());
         productNameToDelete = null;
     }
 
     @Tag("UIHomework")
     @Test
     void task1() {
-        SelenideElement addToCartButton = $x("//*[@data-action='add-to-cart']");
-        addToCartButton.click();
-        addToCartButton.click();
-        addToCartButton.click();
-        $("#open-cart-btn").click();
-        int totalPrice = Integer.parseInt($("#total-price").getText().replaceAll("\\D+", "")
-                .trim());
-        assertThat(totalPrice).as("Сумма в корзине не должна быть выше 300")
-                .isLessThanOrEqualTo(300);
-        System.out.println("Сумма: " + totalPrice);
-        $("#makeOrder").click();
+        for (int i = 0; i < 3; i++) {
+            SelenideSteps.click("//*[@data-action='add-to-cart']");
+        }
+        SelenideSteps.click("#open-cart-btn");
 
-        $x("//*[contains(text(), 'Заказ принят в обработку!')]")
-                .shouldBe(visible)
-                .shouldHave(text("Заказ принят в обработку!"));
-        $x("//*[@id='main-title']")
-                .shouldBe(visible)
-                .shouldHave(text("Заказ успешно оформлен!"));
-
+        int totalPrice = readTotalPrice();
+        assertTotalPriceDoesNotExceed(totalPrice, 300);
+        SelenideSteps.click("#makeOrder");
+        SelenideSteps.shouldHaveText(
+                "//*[contains(text(), 'Заказ принят в обработку!')]",
+                "Заказ принят в обработку!"
+        );
+        SelenideSteps.shouldHaveText(
+                "//*[@id='main-title']",
+                "Заказ успешно оформлен!"
+        );
     }
 
     @Tag("UIHomework")
@@ -60,120 +58,98 @@ public class UIHomeworkWeb {
     void task2() {
         int expectedTotalPrice = 0;
         for (int productIndex : new int[]{0, 2, 3}) {
-            SelenideElement addToCartButton = $$x("//*[@data-action='add-to-cart']").get(productIndex);
-            expectedTotalPrice += Integer.parseInt(addToCartButton.getAttribute("data-price"));
-            addToCartButton.click();
+            String selector = "//*[@data-action='add-to-cart']";
+            expectedTotalPrice += Integer.parseInt(
+                    SelenideSteps.getAttribute(
+                            "(" + selector + ")[" + (productIndex + 1) + "]",
+                            "data-price"
+                    )
+            );
+            SelenideSteps.addProductToCart(productIndex);
         }
 
-        $x("//*[@id='open-cart-btn']").click();
-
-        int totalPrice = Integer.parseInt($x("//*[@id='total-price']")
-                .getText().replaceAll("\\D+", "")
-                .trim());
-        assertThat(totalPrice).as("Сумма в корзине должна совпадать с суммой цен добавленных товаров")
-                .isEqualTo(expectedTotalPrice);
-        System.out.println("Общая сумма: " + totalPrice);
+        SelenideSteps.click("//*[@id='open-cart-btn']");
+        assertTotalPriceEquals(readTotalPrice(), expectedTotalPrice);
     }
 
     @Tag("UIHomework")
     @Test
     void task3() {
-        $x("//*[@class='btn-outline']").click();
-
-        $x("//*[@id='username']").setValue(ConfigParser.getAdminLogin());
-        $x("//*[@id='password']").setValue(ConfigParser.getAdminPassword());
-        $x("//*[@type='submit']").click();
-
-        String name = ConfigParser.getProductName() +" " + new Random().nextInt(1, 999);
-        String price = ConfigParser.getProductPrice();
-
-        $x("//*[@id='n-name']").setValue(name);
-        $x("//*[@id='n-price']").setValue(price);
-        $x("//*[@class='btn btn-add']").click();
-
-        $x("//*[contains(text(), 'Товар успешно добавлен!')]")
-                .shouldBe(visible)
-                .shouldHave(text("Товар успешно добавлен!"));
+        openAdminAndLogin();
+        String name = ConfigParser.getProductName() + " " + new Random().nextInt(1, 999);
+        SelenideSteps.setValue("//*[@id='n-name']", name);
+        SelenideSteps.setValue("//*[@id='n-price']", ConfigParser.getProductPrice());
+        SelenideSteps.click("//*[@class='btn btn-add']");
+        SelenideSteps.shouldHaveText(
+                "//*[contains(text(), 'Товар успешно добавлен!')]",
+                "Товар успешно добавлен!"
+        );
         productNameToDelete = name;
     }
 
     @Tag("UIHomework")
     @Test
     void task4() {
-        $x("//*[@class='btn-outline']").click();
-
-        $x("//*[@id='username']").setValue("admin");
-        $x("//*[@id='password']").setValue("secret123");
-        $x("//*[@type='submit']").click();
-
+        openAdminAndLogin();
         String newName = new Random().nextInt(1, 999) + "Товар ";
+        SelenideSteps.setValue(
+                "//*[@id='tbody']/tr[1]/td[2]//input[@type='text']",
+                newName
+        );
+        SelenideSteps.click("//*[@id='tbody']/tr[1]/td[4]//*[@class='btn btn-upd']");
+        SelenideSteps.click("/html/body/div[2]/div[1]/a");
+        SelenideSteps.shouldBeVisible("//h4[contains(text(), '" + newName + "')]");
+    }
 
-        $x("//*[@id='tbody']/tr[1]/td[2]//input[@type='text']").setValue(newName);
-        $x("//*[@id='tbody']/tr[1]/td[4]//*[@class='btn btn-upd']").click();
+    @Step("Открыть административную панель и войти")
+    private void openAdminAndLogin() {
+        SelenideSteps.click("//*[@class='btn-outline']");
+        SelenideSteps.setValue("//*[@id='username']", ConfigParser.getAdminLogin());
+        SelenideSteps.setValue("//*[@id='password']", ConfigParser.getAdminPassword());
+        SelenideSteps.click("//*[@type='submit']");
+    }
 
+    @Step("Получить отображаемую сумму корзины")
+    private int readTotalPrice() {
+        String priceText = SelenideSteps.getText("//*[@id='total-price']");
+        return Integer.parseInt(priceText.replaceAll("\\D+", "").trim());
+    }
 
-        $x("/html/body/div[2]/div[1]/a").click();
-        sleep(4000);
+    @Step("Проверить, что сумма корзины не превышает {limit}")
+    private void assertTotalPriceDoesNotExceed(int totalPrice, int limit) {
+        assertThat(totalPrice)
+                .as("Сумма в корзине не должна быть выше " + limit)
+                .isLessThanOrEqualTo(limit);
+    }
 
-        $x("//h4[contains(text(), '" + newName + "')]").shouldBe(visible);
+    @Step("Проверить, что сумма корзины равна ожидаемой")
+    private void assertTotalPriceEquals(int actualPrice, int expectedPrice) {
+        assertThat(actualPrice)
+                .as("Сумма корзины должна совпадать с суммой выбранных товаров")
+                .isEqualTo(expectedPrice);
+    }
+
+    @Step("Удалить созданный тестом товар")
+    private void deleteCreatedProduct() {
+        OptionalLong productId = goodsApi.findProductIdByName(productNameToDelete);
+        if (productId.isEmpty()) {
+            throw new AssertionError(
+                    "Тестовый товар не найден при очистке: " + productNameToDelete
+            );
+        }
+        Response response = goodsApi.deleteProduct(productId.getAsLong());
+        apiChecks.assertStatusCode(response, 200);
+        productNameToDelete = null;
     }
 
     @AfterEach
     void tearDown() {
-        if (productNameToDelete != null) {
-            try {
-                Response response = given()
-                        .baseUri("http://localhost:8080")
-                        .auth().preemptive().basic("admin", "secret123")
-                        .log().all()
-                        .when()
-                        .get("/goods/list")
-                        .then()
-                        .log().all()
-                        .statusCode(200)
-                        .extract()
-                        .response();
-
-                List<Long> productIds = response.jsonPath().getList("goods.id", Long.class);
-                List<String> productNames = response.jsonPath().getList("goods.name", String.class);
-                System.out.println("Товары: " + productNames);
-                System.out.println("Ищем: " + productNameToDelete);
-
-                for (int i = 0; i < productNames.size(); i++) {
-                    if (productNameToDelete.equals(productNames.get(i))) {
-                        System.out.println("Удаление товара ID: " + productIds.get(i));
-                        given()
-                                .baseUri(ConfigParser.getBaseUrl())
-                                .auth().preemptive().basic(ConfigParser.getAdminLogin(), ConfigParser.getAdminPassword())
-                                .log().all()
-                                .when()
-                                .delete("/goods/{id}", productIds.get(i))
-                                .then()
-                                .log().all()
-                                .statusCode(200);
-                        break;
-                    }
-                }
-            } catch (Exception e) {
-                System.out.println("Ошибка при удалении: " + e.getMessage());
+        try {
+            if (productNameToDelete != null) {
+                deleteCreatedProduct();
             }
-            productNameToDelete = null;
-        }
-        Selenide.closeWebDriver();
-
-        for (int i = 1; i < 150; i++) {
-            given()
-                    .baseUri("http://localhost:8080")
-                    .auth().preemptive().basic("admin", "secret123")
-                    .contentType(ContentType.JSON)
-                    .log().all()
-                    .pathParam("id", i)
-                    .when()
-                    .delete("/goods/{id}")
-                    .then()
-                    .log().all()
-                    .extract().response();
+        } finally {
+            Selenide.closeWebDriver();
         }
     }
 }
-

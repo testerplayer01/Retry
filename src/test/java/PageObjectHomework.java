@@ -1,18 +1,25 @@
 import com.codeborne.selenide.Selenide;
-import io.restassured.RestAssured;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
+import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import utils.AllureRestAssuredFilter;
+import utils.AllureSelenideListener;
+import utils.ConfigParser;
+import utils.GoodsApiSteps;
+import utils.SelenideSteps;
 
 import java.util.List;
 
-import static com.codeborne.selenide.Selenide.*;
 import static io.restassured.RestAssured.given;
-import static org.assertj.core.api.Assertions.assertThat;
 
-public class PageObjectHomework {
+@Epic("Каталог товаров")
+@Feature("Пользовательский интерфейс через Page Object")
+public class PageObjectHomework  extends AllureSelenideListener {
     private MainPage mainPage;
     private LoginPage loginPage;
     private CartPage cartPage;
@@ -21,11 +28,14 @@ public class PageObjectHomework {
     private LoginPageAssert loginPageAssert;
     private CartPageAssert cartPageAssert;
     private AdminPageAssert adminPageAssert;
+    private final GoodsApiSteps goodsApi = new GoodsApiSteps();
+    private final RestAssuredHomeworkCheck apiChecks = new RestAssuredHomeworkCheck();
+    private String productNameToDelete;
 
 
     @BeforeEach
     void setup(){
-        open("http://localhost:8080");
+        SelenideSteps.open(ConfigParser.getBaseUrl());
         mainPage = new MainPage();
         loginPage = new LoginPage();
         cartPage = new CartPage();
@@ -65,8 +75,8 @@ public class PageObjectHomework {
     void testingLogin(){
         mainPage.clickOpenAdminButton();
         loginPage.waitForPageLoaded()
-                .enterUsername("admin")
-                .enterPassword("secret123")
+                .enterUsername(ConfigParser.getAdminLogin())
+                .enterPassword(ConfigParser.getAdminPassword())
                 .clickLoginButton();
     }
 
@@ -85,13 +95,9 @@ public class PageObjectHomework {
         cartPage.waitForPageToLoad();
         cartPageAssert.cartItemsAreVisible();
 
-        int totalPrice = Integer.parseInt(cartPage.getTotalPrice().replaceAll("\\D+", ""));
-        assertThat(totalPrice).as("Сумма не должна превышать 300р").isLessThanOrEqualTo(300);
-        System.out.println("Сумма в корзине: " + totalPrice);
+        cartPageAssert.totalPriceDoesNotExceed(300);
 
         cartPage.clickMakeOrder();
-        sleep(2000);
-
         mainPageAssert.checkToaster();
 
     }
@@ -101,31 +107,17 @@ public class PageObjectHomework {
     void task2(){
         mainPage.waitForPageToLoad();
 
-        mainPage.addToCartButtons.get(1).click();
-        mainPage.addToCartButtons.get(2).click();
-        mainPage.addToCartButtons.get(3).click();
+        mainPage.addProductToCart(1);
+        mainPage.addProductToCart(2);
+        mainPage.addProductToCart(3);
 
         mainPage.clickCartButton();
         cartPage.waitForPageToLoad();
 
-        Response response = given()
-                .baseUri("http://localhost:8080")
-                .auth().basic("admin", "secret123")
-                .when()
-                .get("/goods/list")
-                .then()
-                .statusCode(200)
-                .extract()
-                .response();
-
-        List<Double> prices = response.jsonPath().getList("goods.price", Double.class);
+        List<Double> prices = getListPrices();
         double expectedTotal = prices.get(1) + prices.get(2) + prices.get(3);
 
-        int actualTotal = Integer.parseInt(cartPage.getTotalPrice().replaceAll("\\D+", ""));
-        assertThat(actualTotal)
-                .as("Сумма должна быть: " + expectedTotal)
-                .isEqualTo((int) expectedTotal);
-        System.out.println("Сумма в корзине: " + actualTotal);
+        cartPageAssert.totalPriceIs((int) expectedTotal);
     }
 
     @Tag("PageObject")
@@ -137,10 +129,7 @@ public class PageObjectHomework {
         loginPage.waitForPageLoaded();
         loginPageAssert.usernameFieldVisible();
         
-        loginPage
-                .enterUsername("admin")
-                .enterPassword("secret123")
-                .clickLoginButton();
+        loginAsAdmin();
         
         adminPage.waitForPageLoaded(); 
         adminPageAssert.nameFieldIsVisible();
@@ -151,6 +140,7 @@ public class PageObjectHomework {
                 .clickAddButton();
         
         adminPageAssert.successMessageIsVisible();
+        productNameToDelete = adminPage.name;
     }
     
     @Tag("PageObject")
@@ -160,23 +150,60 @@ public class PageObjectHomework {
         mainPage.clickOpenAdminButton();
         
         loginPage.waitForPageLoaded();
-        loginPage
-                .enterUsername("admin")
-                .enterPassword("secret123")
-                .clickLoginButton();
+        loginAsAdmin();
         
         adminPage.choiceOldProduct(mainPage.newName);
-        adminPage.updateButton.click();
+        adminPage.clickUpdateButton();
 
         adminPage.clickBackToProducts();
 
         mainPageAssert.checkChange();
-        System.out.println("Новое наименование: " + mainPage.newName);
-        
-        
     }
+
+    @Step("Войти в административную панель")
+    private void loginAsAdmin() {
+        loginPage
+                .enterUsername(ConfigParser.getAdminLogin())
+                .enterPassword(ConfigParser.getAdminPassword())
+                .clickLoginButton();
+    }
+
+    @Step("Получаем список цен товаров через API")
+    private List<Double> getListPrices(){
+        Response response = given()
+                .spec(AllureRestAssuredFilter.requestSpecification(ConfigParser.getBaseUrl()))
+                .auth().preemptive().basic(
+                        ConfigParser.getAdminLogin(),
+                        ConfigParser.getAdminPassword()
+                )
+                .when()
+                .get("/goods/list")
+                .then()
+                .extract()
+                .response();
+        new RestAssuredHomeworkCheck().assertStatusCode(response, 200);
+        return response.jsonPath().getList("goods.price", Double.class);
+    }
+
     @AfterEach
     void tearDown(){
-        Selenide.closeWebDriver();
+        try {
+            if (productNameToDelete != null) {
+                deleteCreatedProduct();
+            }
+        } finally {
+            Selenide.closeWebDriver();
+        }
+    }
+
+    @Step("Удалить созданный тестом товар")
+    private void deleteCreatedProduct() {
+        long productId = goodsApi.findProductIdByName(productNameToDelete)
+                .orElseThrow(() -> new AssertionError(
+                        "Тестовый товар не найден при очистке: " + productNameToDelete
+                ));
+        Response response = goodsApi.deleteProduct(productId);
+        apiChecks.assertStatusCode(response, 200);
+        productNameToDelete = null;
     }
 }

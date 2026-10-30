@@ -1,10 +1,16 @@
 import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.DragAndDropOptions;
 import com.codeborne.selenide.SelenideElement;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
+import io.qameta.allure.Step;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.interactions.Actions;
+import utils.AllureSelenideListener;
+import utils.ConfigParser;
+import utils.SelenideSteps;
 
 import java.time.Duration;
 
@@ -12,7 +18,9 @@ import static com.codeborne.selenide.Condition.exist;
 import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selenide.*;
 
-public class BPLesson {
+@Epic("Каталог товаров")
+@Feature("Перетаскивание и уведомления")
+public class BPLesson extends AllureSelenideListener {
     SelenideElement firstCard = $x("//*[@id='card-50']");
     SelenideElement cardButton = $x("//*[@id='open-cart-btn']");
 
@@ -21,20 +29,23 @@ public class BPLesson {
 //        open();
 //        sleep(30000);
 //        Configuration.pageLoadTimeout = 5000;
-        open("http://localhost:8080/");
+        SelenideSteps.open(ConfigParser.getBaseUrl());
     }
 
     @Tag("UIHomework")
     @Test
     void simpleDnd(){
-        sleep(2000);
-        firstCard.dragAndDrop(DragAndDropOptions.to(cardButton));
-        sleep(2000);
+        SelenideSteps.dragProductToCart("//*[@id='card-50']", "//*[@id='open-cart-btn']");
     }
 
     @Tag("UIHomework")
     @Test
     void anotherDnD(){
+        dragWithActions();
+    }
+
+    @Step("Перетащить карточку к кнопке корзины мышью")
+    private void dragWithActions() {
         actions().moveToElement(firstCard)
                 .clickAndHold()
                 .pause(2000)
@@ -47,6 +58,11 @@ public class BPLesson {
     @Tag("UIHomework")
     @Test
     void slowDnD(){
+        dragWithSlowActions();
+    }
+
+    @Step("Медленно перетащить карточку к кнопке корзины")
+    private void dragWithSlowActions() {
         int firstCardX = firstCard.getCoordinates().inViewPort().getX() + firstCard.getSize().getWidth()/2;
         int firstCardY = firstCard.getCoordinates().inViewPort().getY() + firstCard.getSize().getHeight()/2;
         int cardButtonX = cardButton.getCoordinates().inViewPort().getX() + cardButton.getSize().getWidth()/2;
@@ -69,13 +85,13 @@ public class BPLesson {
     @Tag("UIHomework")
     @Test
     void hiddenTest(){
-        $x("//*[@data-action='add-to-cart']").click();
-        $x("//*[@data-action='add-to-cart']").click();
-        $x("//*[@data-action='add-to-cart']").click();
+        for (int i = 0; i < 3; i++) {
+            SelenideSteps.click("//*[@data-action='add-to-cart']");
+        }
 
-        SelenideElement notificationContainer = $x("(//*[@datatest='notification-container'])[1]");
-        notificationContainer.shouldNot(visible);
-        notificationContainer.should(exist);
-        notificationContainer.$x("./..").should(visible);
+        String notification = "(//*[@datatest='notification-container'])[1]";
+        SelenideSteps.shouldBeHidden(notification);
+        SelenideSteps.shouldExist(notification);
+        SelenideSteps.shouldBeVisible("(" + notification + ")/..");
     }
 }

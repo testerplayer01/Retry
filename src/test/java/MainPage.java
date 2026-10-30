@@ -1,5 +1,6 @@
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;
+import io.qameta.allure.Step;
 
 import java.util.Random;
 
@@ -20,31 +21,43 @@ public class MainPage {
     String newName = "Новый " + new Random().nextInt(103, 300);
     SelenideElement checkChange = $x("//*[contains(text(), '" + newName + "')]");
 
-
+    @Step("Нажать на кнопку добавить в корзину")
     public MainPage clickAddToCartButton() {
         addToCartButtons.first().click();
         return this;
     }
+
+    @Step("Добавить товар с индексом {index} в корзину")
+    public MainPage addProductToCart(int index) {
+        addToCartButtons.get(index).click();
+        return this;
+    }
+    @Step("Нажать на кнопку корзина")
     public MainPage clickCartButton() {
         cartButton.click();
         return this;
     }
+    @Step("Нажать на кнопку увеличения количества")
     public MainPage clickAddCount() {
         addCount.click();
         return this;
     }
+    @Step("Нажать на кнопку уменьшения количества")
     public MainPage clickReduceCount() {
         reduceCount.click();
         return this;
     }
+    @Step("Нажать кнопку 'Администрирование'")
     public MainPage clickOpenAdminButton() {
         openAdminButton.click();
         return this;
     }
+    @Step("Нажать на карточку товара")
     public MainPage clickProductCard() {
         productCards.click();
         return this;
     }
+    @Step("Ожидание загрузки главной страницы")
     public MainPage waitForPageToLoad() {
         addToCartButtons.shouldHave(sizeGreaterThan(0));
         cartButton.shouldBe(visible);

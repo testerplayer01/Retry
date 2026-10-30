@@ -1,112 +1,122 @@
-import com.codeborne.selenide.*;
-import org.junit.jupiter.api.*;
-import org.openqa.selenium.Alert;
+import com.codeborne.selenide.Selenide;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
+import io.qameta.allure.Step;
+import io.restassured.response.Response;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import utils.AllureSelenideListener;
+import utils.ConfigParser;
+import utils.GoodsApiSteps;
+import utils.SelenideSteps;
 
 import java.util.Random;
 
-import static com.codeborne.selenide.CollectionCondition.sizeGreaterThan;
-import static com.codeborne.selenide.Selenide.*; //можно не использовать Selenide.
-import static com.codeborne.selenide.Condition.*; //можно не использовать Condition.
-import static org.assertj.core.api.Assertions.assertThat;
+@Epic("Каталог товаров")
+@Feature("Пользовательский интерфейс через Selenide")
+public class UIHomeworkSelenide extends AllureSelenideListener {
+    private final GoodsApiSteps goodsApi = new GoodsApiSteps();
+    private final RestAssuredHomeworkCheck apiChecks = new RestAssuredHomeworkCheck();
+    private String productNameToDelete;
 
-
-public class UIHomeworkSelenide {
     @BeforeEach
     void setup() {
-//        Configuration.holdBrowserOpen = true;
-        Selenide.open("http://localhost:8080/");
-
+        SelenideSteps.open(ConfigParser.getBaseUrl());
     }
 
     @Tag("Selenide")
     @Test
     void task1() {
-        $x("//*[@class='btn-outline']").click();
-
-        $x("//*[@id='username']").setValue("admin");
-        $x("//*[@id='password']").setValue("secret123");
-        $x("//*[@type='submit']").click();
-
         String name = "Товар " + new Random().nextInt(1, 999);
         String price = String.valueOf(new Random().nextInt(10, 200));
 
-        $x("//*[@id='n-name']").setValue(name);
-        $x("//*[@id='n-price']").setValue(price);
-        $x("//*[@class='btn btn-add']").click();
-
-        $x("/html/body/div[2]/div[1]/a").click();
-        sleep(4000);
-
-        $x("//*[@class='product-card']/h4[contains(text(), '" + name + "')]").shouldBe(visible);
+        addProductThroughAdmin(name, price);
+        productNameToDelete = name;
+        SelenideSteps.click("/html/body/div[2]/div[1]/a");
+        SelenideSteps.shouldBeVisible(
+                "//*[@class='product-card']/h4[contains(text(), '" + name + "')]"
+        );
     }
 
     @Tag("Selenide")
     @Test
     void task2() {
-        $x("//*[@data-action='add-to-cart']").click();
-        $x("//*[@id='open-cart-btn']").click();
-        $x("//*[@class='cart-item']").shouldBe(visible);
-        Selenide.sleep(3000);
+        SelenideSteps.click("//*[@data-action='add-to-cart']");
+        SelenideSteps.click("//*[@id='open-cart-btn']");
+        SelenideSteps.shouldBeVisible("//*[@class='cart-item']");
     }
 
     @Tag("Selenide")
     @Test
     void task3() {
-        $x("//*[@class='btn-outline']").click();;
-
-        $x("//*[@id='username']").setValue("admin1");
-        $x("//*[@id='password']").setValue("secret1234");
-        $x("//*[@type='submit']").click();
-
-        $x("//*[@class='alert alert-danger']").shouldBe(visible);
-        Selenide.sleep(2000);
+        SelenideSteps.click("//*[@class='btn-outline']");
+        SelenideSteps.setValue("//*[@id='username']", "admin1");
+        SelenideSteps.setValue("//*[@id='password']", "secret1234");
+        SelenideSteps.click("//*[@type='submit']");
+        SelenideSteps.shouldBeVisible("//*[@class='alert alert-danger']");
     }
 
     @Tag("Selenide")
     @Test
     void task4() {
-        $x("//*[@data-action='add-to-cart']").click();
-        $x("//*[@id='open-cart-btn']").click();
-        refresh();
-        $x("//*[@id='cart-count']").shouldNot(text("0"));
+        SelenideSteps.click("//*[@data-action='add-to-cart']");
+        SelenideSteps.click("//*[@id='open-cart-btn']");
+        SelenideSteps.refreshPage();
+        SelenideSteps.shouldNotHaveText("//*[@id='cart-count']", "0");
     }
 
     @Tag("Selenide")
     @Test
     void task5() {
-        $x("//*[@class='btn-outline']").click();
-
-        $x("//*[@id='username']").setValue("admin");
-        $x("//*[@id='password']").setValue("secret123");
-        $x("//*[@type='submit']").click();
-
         String name = "Товар " + new Random().nextInt(1, 999);
         String price = String.valueOf(new Random().nextInt(100, 200));
+        addProductThroughAdmin(name, price);
+        productNameToDelete = name;
+        SelenideSteps.click("/html/body/div[2]/div[1]/a");
 
-        $x("//*[@id='n-name']").setValue(name);
-        $x("//*[@id='n-price']").setValue(price);
-        $x("//*[@class='btn btn-add']").click();
-
-        $x("/html/body/div[2]/div[1]/a").click();
-
-        SelenideElement addToCartButton = $x("//*[@data-action='add-to-cart' and @data-name='" + name + "' and @data-price='" + price + "']");
-        addToCartButton.click();
-        addToCartButton.click();
-        addToCartButton.click();
-        addToCartButton.click();
-        $("#open-cart-btn").click();
-        $("#makeOrder").click();
-        Alert activeAlert = switchTo().alert();
-        assertThat(activeAlert.getText())
-                .as("Текст алерта должен содержать 'Денег не хватает! '")
-                .contains("Денег не хватает!");
-                
-        System.out.println(activeAlert.getText());
-        sleep(3000);
-        activeAlert.accept();
+        String productButton =
+                "//*[@data-action='add-to-cart' and @data-name='" + name
+                        + "' and @data-price='" + price + "']";
+        for (int i = 0; i < 4; i++) {
+            SelenideSteps.click(productButton);
+        }
+        SelenideSteps.click("#open-cart-btn");
+        SelenideSteps.click("#makeOrder");
+        SelenideSteps.assertAlertContains("Денег не хватает!");
     }
+
+    @Step("Создать товар в административной панели")
+    private void addProductThroughAdmin(String name, String price) {
+        SelenideSteps.click("//*[@class='btn-outline']");
+        SelenideSteps.setValue("//*[@id='username']", ConfigParser.getAdminLogin());
+        SelenideSteps.setValue("//*[@id='password']", ConfigParser.getAdminPassword());
+        SelenideSteps.click("//*[@type='submit']");
+        SelenideSteps.setValue("//*[@id='n-name']", name);
+        SelenideSteps.setValue("//*[@id='n-price']", price);
+        SelenideSteps.click("//*[@class='btn btn-add']");
+    }
+
+    @Step("Очистить созданный тестом товар")
+    private void deleteCreatedProduct() {
+        long productId = goodsApi.findProductIdByName(productNameToDelete)
+                .orElseThrow(() -> new AssertionError(
+                        "Тестовый товар не найден при очистке: " + productNameToDelete
+                ));
+        Response response = goodsApi.deleteProduct(productId);
+        apiChecks.assertStatusCode(response, 200);
+        productNameToDelete = null;
+    }
+
     @AfterEach
     void tearDown() {
-        Selenide.closeWebDriver();
+        try {
+            if (productNameToDelete != null) {
+                deleteCreatedProduct();
+            }
+        } finally {
+            Selenide.closeWebDriver();
+        }
     }
 }

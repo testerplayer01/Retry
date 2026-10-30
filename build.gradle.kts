@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("io.qameta.allure") version "4.1.0"
 }
 
 group = "org.example"
@@ -7,6 +8,24 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+}
+
+allure {
+    version.set("2.29.0")
+
+    adapter {
+        allureJavaVersion.set("2.29.0")
+        aspectjWeaver.set(true)
+        autoconfigure.set(true)
+
+        frameworks {
+            junit5 {
+                adapterVersion.set("2.29.0")
+                enabled.set(true)
+                autoconfigureListeners.set(true)
+            }
+        }
+    }
 }
 
 dependencies {
@@ -19,6 +38,18 @@ dependencies {
     implementation("org.seleniumhq.selenium:selenium-java:4.50.0")
     implementation("com.codeborne:selenide:7.18.2")
     implementation("org.aeonbits.owner:owner:1.0.12")
+    testImplementation("io.qameta.allure:allure-selenide:2.29.0")
+    testImplementation("io.qameta.allure:allure-rest-assured:2.29.0")
+    testImplementation("io.qameta.allure:allure-junit5:2.29.0")
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
+    systemProperty(
+        "allure.results.directory",
+        layout.buildDirectory.dir("allure-results").get().asFile
+    )
+    systemProperty("file.encoding", "UTF-8")
 }
 
 tasks.test {
